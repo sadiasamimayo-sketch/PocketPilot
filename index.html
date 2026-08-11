@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>PocketPilot - Smart Personal Finance Tracker</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- ================= HEADER ================= -->
+
+    <header class="dashboard-header">
+
+        <div class="brand">
+
+            <div class="brand-icon">
+                💰
+            </div>
+
+            <div>
+                <h1>PocketPilot</h1>
+                <p>Smart Personal Finance Tracker</p>
+            </div>
+
+        </div>
+
+        <div class="header-tools">
+
+            <div class="time-box">
+                <span>🕒</span>
+
+                <div>
+                    <small>Current Time</small>
+                    <strong id="currentTime">--:--:--</strong>
+                </div>
+            </div>
+
+            <button
+                type="button"
+                id="darkModeButton"
+                class="theme-button"
+            >
+                🌙 Dark Mode
+            </button>
+
+        </div>
+
+        <div class="header-badge">
+            Personal Finance
+        </div>
+
+    </header>
+
+
+    <main class="dashboard">
+
+
+        <!-- ================= BALANCE ================= -->
+
+        <section class="dashboard-section balance-section">
+
+            <div class="balance-card">
+
+                <div class="balance-icon">
+                    💳
+                </div>
+
+                <div>
+                    <p>Total Balance</p>
+
+                    <h2 id="balance">
+                        Rs. 0
+                    </h2>
+
+                    <span>
+                        Your current available balance
+                    </span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= SUMMARY ================= -->
+
+        <section class="summary-section">
+
+            <div class="summary-card income-card">
+
+                <div class="card-icon">💵</div>
+
+                <div>
+                    <p>Total Income</p>
+
+                    <h3 id="incomeTotal">
+                        Rs. 0
+                    </h3>
+
+                    <span>Money received</span>
+                </div>
+
+            </div>
+
+
+            <div class="summary-card expense-card">
+
+                <div class="card-icon">💸</div>
+
+                <div>
+                    <p>Total Expenses</p>
+
+                    <h3 id="expenseTotal">
+                        Rs. 0
+                    </h3>
+
+                    <span>Money spent</span>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= MONTHLY BUDGET ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>📅 Monthly Budget</h2>
+                    <p>Control your monthly spending</p>
+                </div>
+
+            </div>
+
+
+            <div class="budget-form">
+
+                <input
+                    type="number"
+                    id="budgetAmount"
+                    placeholder="Enter monthly budget"
+                    min="1"
+                >
+
+                <button
+                    type="button"
+                    id="setBudgetButton"
+                    class="primary-button"
+                >
+                    💾 Set Budget
+                </button>
+
+            </div>
+
+
+            <div class="budget-info">
+
+                <div class="info-box">
+                    <span>💰 Budget</span>
+                    <strong id="budgetTotal">Rs. 0</strong>
+                </div>
+
+                <div class="info-box">
+                    <span>💸 Used</span>
+                    <strong id="budgetUsed">Rs. 0</strong>
+                </div>
+
+                <div class="info-box">
+                    <span>💵 Remaining</span>
+                    <strong id="budgetRemaining">Rs. 0</strong>
+                </div>
+
+            </div>
+
+
+            <div class="progress-container">
+                <div id="budgetProgress"></div>
+            </div>
+
+            <p id="budgetPercentage">
+                0% used
+            </p>
+
+        </section>
+
+
+        <!-- ================= ADD INCOME ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-heading">
+
+                <span class="section-icon">💵</span>
+
+                <div>
+                    <h2>Add Income</h2>
+                    <p>Record your incoming money</p>
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label for="incomeName">
+                        Income Source
+                    </label>
+
+                    <input
+                        type="text"
+                        id="incomeName"
+                        placeholder="e.g. Salary"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="incomeAmount">
+                        Amount
+                    </label>
+
+                    <input
+                        type="number"
+                        id="incomeAmount"
+                        placeholder="e.g. 50000"
+                        min="1"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="incomeDate">
+                        Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="incomeDate"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label for="incomeNote">
+                    Note
+                </label>
+
+                <textarea
+                    id="incomeNote"
+                    placeholder="Optional note..."
+                    rows="3"
+                ></textarea>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="addIncomeButton"
+                class="primary-button"
+            >
+                💵 Add Income
+            </button>
+
+        </section>
+
+
+        <!-- ================= RECENT INCOME ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>💵 Recent Income</h2>
+                    <p>Your latest income records</p>
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <div class="income-table header-row">
+
+                    <div>Income Source</div>
+                    <div>Amount</div>
+                    <div>Date</div>
+                    <div>Time</div>
+                    <div>Note</div>
+                    <div>Actions</div>
+
+                </div>
+
+
+                <div id="incomeList"></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= ADD EXPENSE ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-heading">
+
+                <span class="section-icon">➕</span>
+
+                <div>
+                    <h2>Add Expense</h2>
+                    <p>Record where your money goes</p>
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label for="expenseName">
+                        Expense Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="expenseName"
+                        placeholder="e.g. Lunch"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="expenseCategory">
+                        Category
+                    </label>
+
+                    <select id="expenseCategory">
+
+                        <option value="">
+                            Select Category
+                        </option>
+
+                        <option value="Food">🍔 Food</option>
+                        <option value="Transport">🚗 Transport</option>
+                        <option value="Education">📚 Education</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Work">💻 Work</option>
+                        <option value="Bills">🧾 Bills</option>
+                        <option value="Health">❤️ Health</option>
+                        <option value="Other">📦 Other</option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="expenseAmount">
+                        Amount
+                    </label>
+
+                    <input
+                        type="number"
+                        id="expenseAmount"
+                        placeholder="e.g. 500"
+                        min="1"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="expenseDate">
+                        Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="expenseDate"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <div class="input-group">
+
+                <label for="expenseNote">
+                    Note
+                </label>
+
+                <textarea
+                    id="expenseNote"
+                    placeholder="Optional note..."
+                    rows="3"
+                ></textarea>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="addExpenseButton"
+                class="primary-button"
+            >
+                ➕ Add Expense
+            </button>
+
+        </section>
+
+
+        <!-- ================= RECENT EXPENSES ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>🧾 Recent Expenses</h2>
+                    <p>Track and manage your spending</p>
+                </div>
+
+            </div>
+
+
+            <div class="filters">
+
+                <input
+                    type="text"
+                    id="searchExpense"
+                    placeholder="🔎 Search expense..."
+                >
+
+                <select id="filterCategory">
+
+                    <option value="">All Categories</option>
+                    <option value="Food">🍔 Food</option>
+                    <option value="Transport">🚗 Transport</option>
+                    <option value="Education">📚 Education</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Work">💻 Work</option>
+                    <option value="Bills">🧾 Bills</option>
+                    <option value="Health">❤️ Health</option>
+                    <option value="Other">📦 Other</option>
+
+                </select>
+
+
+                <select id="sortExpenses">
+
+                    <option value="">Sort Expenses</option>
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="low">Amount: Low → High</option>
+                    <option value="high">Amount: High → Low</option>
+                    <option value="name">Name: A → Z</option>
+
+                </select>
+
+
+                <button
+                    type="button"
+                    id="clearFilterButton"
+                    class="secondary-button"
+                >
+                    🧹 Clear Filters
+                </button>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <div class="expense-table header-row">
+
+                    <div>Expense Name</div>
+                    <div>Category</div>
+                    <div>Amount</div>
+                    <div>Date</div>
+                    <div>Time</div>
+                    <div>Actions</div>
+
+                </div>
+
+
+                <div id="expenseList"></div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= SAVINGS ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>💰 Savings</h2>
+                    <p>Automatically calculated from your records</p>
+                </div>
+
+            </div>
+
+
+            <div class="savings-card">
+
+                <div class="info-box">
+                    <span>Total Income</span>
+                    <strong id="savingsIncome">Rs. 0</strong>
+                </div>
+
+                <div class="info-box">
+                    <span>Total Expenses</span>
+                    <strong id="savingsExpense">Rs. 0</strong>
+                </div>
+
+                <div class="info-box">
+                    <span>Current Savings</span>
+                    <strong id="savingsTotal">Rs. 0</strong>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= CAN I AFFORD IT ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>🛒 Can I Afford It?</h2>
+                    <p>Check a purchase before spending</p>
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label for="affordItem">
+                        What do you want to buy?
+                    </label>
+
+                    <input
+                        type="text"
+                        id="affordItem"
+                        placeholder="e.g. Headphones"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="affordAmount">
+                        Price
+                    </label>
+
+                    <input
+                        type="number"
+                        id="affordAmount"
+                        placeholder="e.g. 15000"
+                        min="1"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="checkAffordButton"
+                class="primary-button"
+            >
+                🔍 Check Affordability
+            </button>
+
+
+            <div
+                id="affordResult"
+                class="decision-result"
+            ></div>
+
+        </section>
+
+
+        <!-- ================= SMART DECISION ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>🧠 Smart Financial Decision</h2>
+
+                    <p>
+                        Automatically checks your current financial condition
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div
+                id="smartDecisionResult"
+                class="decision-result"
+            ></div>
+
+        </section>
+
+
+        <!-- ================= MONTHLY REPORT ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>📅 Monthly Financial Report</h2>
+
+                    <p>
+                        Automatically updated from your current month records
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div id="monthlyReport" class="monthly-report"></div>
+
+        </section>
+
+
+        <!-- ================= FINANCIAL CHAT ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>💬 Financial Chat</h2>
+
+                    <p>
+                        Ask questions about your PocketPilot data
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="chat-container">
+
+                <div
+                    id="chatMessages"
+                    class="chat-messages"
+                >
+
+                    <div class="chat-message bot-message">
+
+                        <div class="chat-avatar">
+                            🤖
+                        </div>
+
+                        <div class="chat-bubble">
+
+                            <strong>PocketPilot Assistant</strong>
+
+                            <p>
+                                Hello! Ask me about your balance,
+                                income, expenses, savings or budget.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chat-input-area">
+
+                    <input
+                        type="text"
+                        id="financialChatInput"
+                        placeholder="Ask something about your finances..."
+                    >
+
+                    <button
+                        type="button"
+                        id="financialChatButton"
+                        class="primary-button"
+                    >
+                        💬 Send
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= SAVING GOALS ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>🎯 Saving Goals</h2>
+
+                    <p>
+                        Progress automatically follows your current savings
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="form-grid">
+
+                <div class="input-group">
+
+                    <label for="goalName">
+                        Goal Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="goalName"
+                        placeholder="e.g. New Laptop"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="goalTarget">
+                        Target Amount
+                    </label>
+
+                    <input
+                        type="number"
+                        id="goalTarget"
+                        placeholder="e.g. 100000"
+                        min="1"
+                    >
+
+                </div>
+
+
+                <div class="input-group">
+
+                    <label for="goalDeadline">
+                        Target Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="goalDeadline"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="addGoalButton"
+                class="primary-button"
+            >
+                🎯 Create Saving Goal
+            </button>
+
+
+            <div
+                id="savingGoalsList"
+                class="saving-goals-list"
+            ></div>
+
+        </section>
+
+
+        <!-- ================= DATA TOOLS ================= -->
+
+        <section class="dashboard-section">
+
+            <div class="section-header">
+
+                <div>
+                    <h2>🛠️ Data Tools</h2>
+                    <p>Manage your PocketPilot data</p>
+                </div>
+
+            </div>
+
+
+            <div class="tools-buttons">
+
+                <button
+                    type="button"
+                    id="exportCSVButton"
+                >
+                    📤 Export CSV
+                </button>
+
+                <button
+                    type="button"
+                    id="clearFiltersButton"
+                >
+                    🧹 Clear Filters
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- ================= DANGER ZONE ================= -->
+
+        <section class="dashboard-section danger-section">
+
+            <h3>⚠️ Danger Zone</h3>
+
+            <p>
+                Delete all saved income, expenses, goals and budget data.
+            </p>
+
+            <button
+                type="button"
+                id="resetAllButton"
+                class="reset-button"
+            >
+                🔄 Reset All Data
+            </button>
+
+        </section>
+
+    </main>
+
+
+    <!-- ================= FOOTER ================= -->
+
+    <footer class="dashboard-footer">
+
+        <p>
+            💰 PocketPilot
+            <span>•</span>
+            Smart Personal Finance Tracker
+        </p>
+
+    </footer>
+
+</div>
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
