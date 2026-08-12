@@ -3,31 +3,22 @@
    Smart Personal Finance Tracker
 ===================================================== */
 
+/* ================= DATA ================= */
 
-/* =====================================================
-   DATA
-===================================================== */
+let incomeData =
+    JSON.parse(localStorage.getItem("pocketpilot_income")) || [];
 
-let incomeData = JSON.parse(
-    localStorage.getItem("pocketpilot_income")
-) || [];
+let expenseData =
+    JSON.parse(localStorage.getItem("pocketpilot_expenses")) || [];
 
-let expenseData = JSON.parse(
-    localStorage.getItem("pocketpilot_expenses")
-) || [];
+let savingGoals =
+    JSON.parse(localStorage.getItem("pocketpilot_goals")) || [];
 
-let savingGoals = JSON.parse(
-    localStorage.getItem("pocketpilot_goals")
-) || [];
-
-let budget = Number(
-    localStorage.getItem("pocketpilot_budget")
-) || 0;
+let budget =
+    Number(localStorage.getItem("pocketpilot_budget")) || 0;
 
 
-/* =====================================================
-   ELEMENTS
-===================================================== */
+/* ================= ELEMENTS ================= */
 
 const incomeName = document.getElementById("incomeName");
 const incomeAmount = document.getElementById("incomeAmount");
@@ -45,51 +36,62 @@ const goalTarget = document.getElementById("goalTarget");
 const goalDeadline = document.getElementById("goalDeadline");
 
 
-/* =====================================================
-   DATE / TIME
-===================================================== */
+/* ================= PAKISTAN DATE/TIME ================= */
 
-function getToday() {
+function getPakistanDateTime() {
 
     const now = new Date();
 
-    const year = now.getFullYear();
+    const formatter = new Intl.DateTimeFormat("en-US", {
+        timeZone: "Asia/Karachi",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    });
 
-    const month = String(
-        now.getMonth() + 1
-    ).padStart(2, "0");
+    const parts = formatter.formatToParts(now);
 
-    const day = String(
-        now.getDate()
-    ).padStart(2, "0");
+    const values = {};
 
-    return `${year}-${month}-${day}`;
+    parts.forEach(function (part) {
+        if (part.type !== "literal") {
+            values[part.type] = part.value;
+        }
+    });
+
+    return {
+        date:
+            `${values.year}-${values.month}-${values.day}`,
+
+        time:
+            `${values.hour}:${values.minute}:${values.second} ${values.dayPeriod}`,
+
+        timestamp:
+            now.getTime()
+    };
+}
+
+
+function getToday() {
+    return getPakistanDateTime().date;
 }
 
 
 function getCurrentTime() {
-
-    return new Date().toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit"
-    });
-
+    return getPakistanDateTime().time;
 }
 
 
 function getCurrentMonth() {
-
-    const now = new Date();
-
-    const year = now.getFullYear();
-
-    const month = String(
-        now.getMonth() + 1
-    ).padStart(2, "0");
-
-    return `${year}-${month}`;
+    return getToday().substring(0, 7);
 }
 
+
+/* ================= DEFAULT DATES ================= */
 
 if (incomeDate) {
     incomeDate.value = getToday();
@@ -100,9 +102,7 @@ if (expenseDate) {
 }
 
 
-/* =====================================================
-   SAVE DATA
-===================================================== */
+/* ================= SAVE DATA ================= */
 
 function saveData() {
 
@@ -125,152 +125,124 @@ function saveData() {
         "pocketpilot_budget",
         String(budget)
     );
-
 }
 
 
-/* =====================================================
-   FORMAT MONEY
-===================================================== */
+/* ================= MONEY FORMAT ================= */
 
 function money(value) {
 
-    return "Rs. " + Number(value).toLocaleString("en-PK");
-
+    return "Rs. " +
+        Number(value || 0).toLocaleString("en-PK");
 }
 
 
-/* =====================================================
-   TOTALS
-===================================================== */
+/* ================= TOTALS ================= */
 
 function getTotalIncome() {
 
-    return incomeData.reduce(
-        (total, item) =>
-            total + Number(item.amount),
-        0
-    );
+    return incomeData.reduce(function (total, item) {
 
+        return total + Number(item.amount || 0);
+
+    }, 0);
 }
 
 
 function getTotalExpenses() {
 
-    return expenseData.reduce(
-        (total, item) =>
-            total + Number(item.amount),
-        0
-    );
+    return expenseData.reduce(function (total, item) {
 
+        return total + Number(item.amount || 0);
+
+    }, 0);
 }
 
 
 function getSavings() {
 
     return getTotalIncome() - getTotalExpenses();
-
 }
 
 
-/* =====================================================
-   CURRENT MONTH EXPENSES
-===================================================== */
+/* ================= MONTHLY TOTALS ================= */
 
 function getCurrentMonthExpenses() {
 
     const currentMonth = getCurrentMonth();
 
     return expenseData
-        .filter(item =>
-            item.date &&
-            item.date.startsWith(currentMonth)
-        )
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.amount),
-            0
-        );
+        .filter(function (item) {
 
+            return item.date &&
+                item.date.startsWith(currentMonth);
+
+        })
+        .reduce(function (sum, item) {
+
+            return sum + Number(item.amount || 0);
+
+        }, 0);
 }
 
-
-/* =====================================================
-   CURRENT MONTH INCOME
-===================================================== */
 
 function getCurrentMonthIncome() {
 
     const currentMonth = getCurrentMonth();
 
     return incomeData
-        .filter(item =>
-            item.date &&
-            item.date.startsWith(currentMonth)
-        )
-        .reduce(
-            (sum, item) =>
-                sum + Number(item.amount),
-            0
-        );
+        .filter(function (item) {
 
+            return item.date &&
+                item.date.startsWith(currentMonth);
+
+        })
+        .reduce(function (sum, item) {
+
+            return sum + Number(item.amount || 0);
+
+        }, 0);
 }
 
 
-/* =====================================================
-   UPDATE DASHBOARD
-===================================================== */
+/* ================= UPDATE DASHBOARD ================= */
 
 function updateDashboard(showBudgetAlert = false) {
 
     const totalIncome = getTotalIncome();
-
     const totalExpenses = getTotalExpenses();
-
     const savings = totalIncome - totalExpenses;
 
-
-    /* TOTAL INCOME */
 
     const incomeTotal =
         document.getElementById("incomeTotal");
 
     if (incomeTotal) {
-        incomeTotal.textContent =
-            money(totalIncome);
+        incomeTotal.textContent = money(totalIncome);
     }
 
-
-    /* TOTAL EXPENSES */
 
     const expenseTotal =
         document.getElementById("expenseTotal");
 
     if (expenseTotal) {
-        expenseTotal.textContent =
-            money(totalExpenses);
+        expenseTotal.textContent = money(totalExpenses);
     }
 
-
-    /* BALANCE */
 
     const balance =
         document.getElementById("balance");
 
     if (balance) {
-        balance.textContent =
-            money(savings);
+        balance.textContent = money(savings);
     }
 
-
-    /* SAVINGS */
 
     const savingsIncome =
         document.getElementById("savingsIncome");
 
     if (savingsIncome) {
-        savingsIncome.textContent =
-            money(totalIncome);
+        savingsIncome.textContent = money(totalIncome);
     }
 
 
@@ -278,8 +250,7 @@ function updateDashboard(showBudgetAlert = false) {
         document.getElementById("savingsExpense");
 
     if (savingsExpense) {
-        savingsExpense.textContent =
-            money(totalExpenses);
+        savingsExpense.textContent = money(totalExpenses);
     }
 
 
@@ -287,123 +258,99 @@ function updateDashboard(showBudgetAlert = false) {
         document.getElementById("savingsTotal");
 
     if (savingsTotal) {
-        savingsTotal.textContent =
-            money(savings);
+        savingsTotal.textContent = money(savings);
     }
 
 
-    /* OTHER SECTIONS */
-
     updateBudget(showBudgetAlert);
-
     renderIncome();
-
     renderExpenses();
-
     renderSavingGoals();
-
     updateMonthlyReport();
-
     updateSmartDecision();
 
     saveData();
-
 }
 
 
-/* =====================================================
-   ADD INCOME
-===================================================== */
+/* ================= ADD INCOME ================= */
 
 const addIncomeButton =
     document.getElementById("addIncomeButton");
 
-
 if (addIncomeButton) {
 
-    addIncomeButton.addEventListener(
-        "click",
-        function () {
+    addIncomeButton.addEventListener("click", function () {
 
-            const source =
-                incomeName.value.trim();
+        const source =
+            incomeName.value.trim();
 
-            const amount =
-                Number(incomeAmount.value);
+        const amount =
+            Number(incomeAmount.value);
 
-            const date =
-                incomeDate.value;
+        const date =
+            incomeDate.value;
 
-            const note =
-                incomeNote.value.trim();
+        const note =
+            incomeNote.value.trim();
 
 
-            if (!source) {
-
-                alert("Please enter income source.");
-
-                return;
-
-            }
-
-
-            if (!amount || amount <= 0) {
-
-                alert("Please enter a valid amount.");
-
-                return;
-
-            }
-
-
-            if (!date) {
-
-                alert("Please select a date.");
-
-                return;
-
-            }
-
-
-            incomeData.push({
-
-                id: Date.now(),
-
-                source: source,
-
-                amount: amount,
-
-                date: date,
-
-                time: getCurrentTime(),
-
-                note: note || "—"
-
-            });
-
-
-            incomeName.value = "";
-
-            incomeAmount.value = "";
-
-            incomeNote.value = "";
-
-            incomeDate.value = getToday();
-
-
-            updateDashboard();
-
-            alert("Income added successfully.");
-
+        if (!source) {
+            alert("Please enter income source.");
+            return;
         }
-    );
 
+
+        if (!amount || amount <= 0) {
+            alert("Please enter a valid amount.");
+            return;
+        }
+
+
+        if (!date) {
+            alert("Please select a date.");
+            return;
+        }
+
+
+        const pakistanDateTime =
+            getPakistanDateTime();
+
+
+        incomeData.push({
+
+            id: Date.now(),
+
+            source: source,
+
+            amount: amount,
+
+            date: date,
+
+            time: pakistanDateTime.time,
+
+            createdAt: pakistanDateTime.timestamp,
+
+            note: note || "—"
+
+        });
+
+
+        incomeName.value = "";
+        incomeAmount.value = "";
+        incomeNote.value = "";
+        incomeDate.value = getToday();
+
+
+        updateDashboard();
+
+        alert("Income added successfully.");
+
+    });
 }
 
 
-/* =====================================================
-   RENDER INCOME
-===================================================== */
+/* ================= RENDER INCOME ================= */
 
 function renderIncome() {
 
@@ -424,15 +371,19 @@ function renderIncome() {
         `;
 
         return;
-
     }
 
 
     const records =
-        [...incomeData].reverse();
+        [...incomeData].sort(function (a, b) {
+
+            return getRecordTimestamp(b) -
+                getRecordTimestamp(a);
+
+        });
 
 
-    records.forEach(item => {
+    records.forEach(function (item) {
 
         const row =
             document.createElement("div");
@@ -456,10 +407,10 @@ function renderIncome() {
             </div>
 
             <div>
-                ${item.time || "—"}
+                ${escapeHTML(item.time || "—")}
             </div>
 
-            <div class="note">
+            <div>
                 ${escapeHTML(item.note || "—")}
             </div>
 
@@ -467,221 +418,183 @@ function renderIncome() {
 
                 <button
                     type="button"
-                    onclick="editIncome(${item.id})"
-                    title="Edit"
-                >
+                    onclick="editIncome(${item.id})">
                     ✏️
                 </button>
 
                 <button
                     type="button"
-                    onclick="deleteIncome(${item.id})"
-                    title="Delete"
-                >
+                    onclick="deleteIncome(${item.id})">
                     🗑️
                 </button>
 
             </div>
-
         `;
+
 
         list.appendChild(row);
 
     });
-
 }
 
 
-/* =====================================================
-   EDIT INCOME
-===================================================== */
+/* ================= EDIT INCOME ================= */
 
 function editIncome(id) {
 
     const item =
-        incomeData.find(
-            income => income.id === id
-        );
+        incomeData.find(function (income) {
+
+            return income.id === id;
+
+        });
+
 
     if (!item) return;
 
 
     const newSource =
-        prompt(
-            "Income Source:",
-            item.source
-        );
+        prompt("Income Source:", item.source);
 
     if (newSource === null) return;
 
 
     const newAmount =
-        prompt(
-            "Amount:",
-            item.amount
-        );
+        prompt("Amount:", item.amount);
 
     if (newAmount === null) return;
 
 
     if (
         newSource.trim() === "" ||
+        !Number(newAmount) ||
         Number(newAmount) <= 0
     ) {
 
         alert("Invalid information.");
-
         return;
 
     }
 
 
-    item.source =
-        newSource.trim();
-
-    item.amount =
-        Number(newAmount);
-
+    item.source = newSource.trim();
+    item.amount = Number(newAmount);
 
     updateDashboard();
-
 }
 
 
-/* =====================================================
-   DELETE INCOME
-===================================================== */
+/* ================= DELETE INCOME ================= */
 
 function deleteIncome(id) {
 
-    const confirmDelete =
-        confirm(
-            "Delete this income record?"
-        );
-
-    if (!confirmDelete) return;
+    if (!confirm("Delete this income record?")) {
+        return;
+    }
 
 
     incomeData =
-        incomeData.filter(
-            item => item.id !== id
-        );
+        incomeData.filter(function (item) {
+
+            return item.id !== id;
+
+        });
 
 
     updateDashboard();
-
 }
 
 
-/* =====================================================
-   ADD EXPENSE
-===================================================== */
+/* ================= ADD EXPENSE ================= */
 
 const addExpenseButton =
     document.getElementById("addExpenseButton");
 
-
 if (addExpenseButton) {
 
-    addExpenseButton.addEventListener(
-        "click",
-        function () {
+    addExpenseButton.addEventListener("click", function () {
 
-            const name =
-                expenseName.value.trim();
+        const name =
+            expenseName.value.trim();
 
-            const category =
-                expenseCategory.value;
+        const category =
+            expenseCategory.value;
 
-            const amount =
-                Number(expenseAmount.value);
+        const amount =
+            Number(expenseAmount.value);
 
-            const date =
-                expenseDate.value;
+        const date =
+            expenseDate.value;
 
-            const note =
-                expenseNote.value.trim();
+        const note =
+            expenseNote.value.trim();
 
 
-            if (!name) {
-
-                alert("Please enter expense name.");
-
-                return;
-
-            }
-
-
-            if (!category) {
-
-                alert("Please select a category.");
-
-                return;
-
-            }
-
-
-            if (!amount || amount <= 0) {
-
-                alert("Please enter a valid amount.");
-
-                return;
-
-            }
-
-
-            if (!date) {
-
-                alert("Please select a date.");
-
-                return;
-
-            }
-
-
-            expenseData.push({
-
-                id: Date.now(),
-
-                name: name,
-
-                category: category,
-
-                amount: amount,
-
-                date: date,
-
-                time: getCurrentTime(),
-
-                note: note || "—"
-
-            });
-
-
-            expenseName.value = "";
-
-            expenseCategory.value = "";
-
-            expenseAmount.value = "";
-
-            expenseNote.value = "";
-
-            expenseDate.value = getToday();
-
-
-            updateDashboard(true);
-
-            alert("Expense added successfully.");
-
+        if (!name) {
+            alert("Please enter expense name.");
+            return;
         }
-    );
 
+
+        if (!category) {
+            alert("Please select a category.");
+            return;
+        }
+
+
+        if (!amount || amount <= 0) {
+            alert("Please enter a valid amount.");
+            return;
+        }
+
+
+        if (!date) {
+            alert("Please select a date.");
+            return;
+        }
+
+
+        const pakistanDateTime =
+            getPakistanDateTime();
+
+
+        expenseData.push({
+
+            id: Date.now(),
+
+            name: name,
+
+            category: category,
+
+            amount: amount,
+
+            date: date,
+
+            time: pakistanDateTime.time,
+
+            createdAt: pakistanDateTime.timestamp,
+
+            note: note || "—"
+
+        });
+
+
+        expenseName.value = "";
+        expenseCategory.value = "";
+        expenseAmount.value = "";
+        expenseNote.value = "";
+        expenseDate.value = getToday();
+
+
+        updateDashboard(true);
+
+        alert("Expense added successfully.");
+
+    });
 }
 
 
-/* =====================================================
-   RENDER EXPENSES
-===================================================== */
+/* ================= RENDER EXPENSES ================= */
 
 function renderExpenses() {
 
@@ -689,6 +602,7 @@ function renderExpenses() {
         document.getElementById("expenseList");
 
     if (!list) return;
+
 
     list.innerHTML = "";
 
@@ -728,79 +642,79 @@ function renderExpenses() {
     if (search) {
 
         records =
-            records.filter(item =>
-                item.name
-                    .toLowerCase()
-                    .includes(search)
-            );
+            records.filter(function (item) {
 
+                return item.name
+                    .toLowerCase()
+                    .includes(search);
+
+            });
     }
 
 
     if (category) {
 
         records =
-            records.filter(
-                item =>
-                    item.category === category
-            );
+            records.filter(function (item) {
 
+                return item.category === category;
+
+            });
     }
 
 
     if (sort === "newest") {
 
-        records.sort(
-            (a, b) =>
-                new Date(b.date) -
-                new Date(a.date)
-        );
+        records.sort(function (a, b) {
 
-    }
+            return getRecordTimestamp(b) -
+                getRecordTimestamp(a);
 
-    else if (sort === "oldest") {
+        });
 
-        records.sort(
-            (a, b) =>
-                new Date(a.date) -
-                new Date(b.date)
-        );
+    } else if (sort === "oldest") {
 
-    }
+        records.sort(function (a, b) {
 
-    else if (sort === "low") {
+            return getRecordTimestamp(a) -
+                getRecordTimestamp(b);
 
-        records.sort(
-            (a, b) =>
-                Number(a.amount) -
-                Number(b.amount)
-        );
+        });
 
-    }
+    } else if (sort === "low") {
 
-    else if (sort === "high") {
+        records.sort(function (a, b) {
 
-        records.sort(
-            (a, b) =>
-                Number(b.amount) -
-                Number(a.amount)
-        );
+            return Number(a.amount) -
+                Number(b.amount);
 
-    }
+        });
 
-    else if (sort === "name") {
+    } else if (sort === "high") {
 
-        records.sort(
-            (a, b) =>
-                a.name.localeCompare(b.name)
-        );
+        records.sort(function (a, b) {
 
-    }
+            return Number(b.amount) -
+                Number(a.amount);
 
-    else {
+        });
 
-        records.reverse();
+    } else if (sort === "name") {
 
+        records.sort(function (a, b) {
+
+            return a.name.localeCompare(b.name);
+
+        });
+
+    } else {
+
+        records.sort(function (a, b) {
+
+            return getRecordTimestamp(b) -
+                getRecordTimestamp(a);
+
+        });
     }
 
 
@@ -813,11 +727,10 @@ function renderExpenses() {
         `;
 
         return;
-
     }
 
 
-    records.forEach(item => {
+    records.forEach(function (item) {
 
         const row =
             document.createElement("div");
@@ -836,142 +749,143 @@ function renderExpenses() {
                 ${escapeHTML(item.category)}
             </div>
 
+            <div class="amount">
+                ${money(item.amount)}
+            </div>
+
             <div>
                 ${formatDate(item.date)}
             </div>
 
             <div>
-                ${item.time || "—"}
-            </div>
-
-            <div class="amount">
-                ${money(item.amount)}
+                ${escapeHTML(item.time || "—")}
             </div>
 
             <div class="action-buttons">
 
                 <button
                     type="button"
-                    onclick="editExpense(${item.id})"
-                    title="Edit"
-                >
+                    onclick="editExpense(${item.id})">
                     ✏️
                 </button>
 
                 <button
                     type="button"
-                    onclick="deleteExpense(${item.id})"
-                    title="Delete"
-                >
+                    onclick="deleteExpense(${item.id})">
                     🗑️
                 </button>
 
             </div>
-
         `;
+
 
         list.appendChild(row);
 
     });
-
 }
 
 
-/* =====================================================
-   EDIT EXPENSE
-===================================================== */
+/* ================= RECORD TIMESTAMP ================= */
+
+function getRecordTimestamp(item) {
+
+    if (item.createdAt) {
+
+        if (typeof item.createdAt === "number") {
+            return item.createdAt;
+        }
+
+
+        const timestamp =
+            new Date(item.createdAt).getTime();
+
+
+        if (!isNaN(timestamp)) {
+            return timestamp;
+        }
+    }
+
+
+    return Number(item.id) || 0;
+}
+
+
+/* ================= EDIT EXPENSE ================= */
 
 function editExpense(id) {
 
     const item =
-        expenseData.find(
-            expense => expense.id === id
-        );
+        expenseData.find(function (expense) {
+
+            return expense.id === id;
+
+        });
+
 
     if (!item) return;
 
 
     const newName =
-        prompt(
-            "Expense Name:",
-            item.name
-        );
+        prompt("Expense Name:", item.name);
 
     if (newName === null) return;
 
 
     const newAmount =
-        prompt(
-            "Amount:",
-            item.amount
-        );
+        prompt("Amount:", item.amount);
 
     if (newAmount === null) return;
 
 
     if (
         newName.trim() === "" ||
+        !Number(newAmount) ||
         Number(newAmount) <= 0
     ) {
 
         alert("Invalid information.");
-
         return;
-
     }
 
 
-    item.name =
-        newName.trim();
+    item.name = newName.trim();
+    item.amount = Number(newAmount);
 
-    item.amount =
-        Number(newAmount);
-
-
-    updateDashboard(true);
-
+    updateDashboard();
 }
 
 
-/* =====================================================
-   DELETE EXPENSE
-===================================================== */
+/* ================= DELETE EXPENSE ================= */
 
 function deleteExpense(id) {
 
-    const confirmDelete =
-        confirm(
-            "Delete this expense record?"
-        );
-
-    if (!confirmDelete) return;
+    if (!confirm("Delete this expense record?")) {
+        return;
+    }
 
 
     expenseData =
-        expenseData.filter(
-            item => item.id !== id
-        );
+        expenseData.filter(function (item) {
+
+            return item.id !== id;
+
+        });
 
 
     updateDashboard();
-
 }
 
 
-/* =====================================================
-   FILTER EVENTS
-===================================================== */
+/* ================= FILTERS ================= */
 
 const searchExpense =
     document.getElementById("searchExpense");
 
 if (searchExpense) {
-
     searchExpense.addEventListener(
         "input",
         renderExpenses
     );
-
 }
 
 
@@ -979,12 +893,10 @@ const filterCategory =
     document.getElementById("filterCategory");
 
 if (filterCategory) {
-
     filterCategory.addEventListener(
         "change",
         renderExpenses
     );
-
 }
 
 
@@ -992,12 +904,10 @@ const sortExpenses =
     document.getElementById("sortExpenses");
 
 if (sortExpenses) {
-
     sortExpenses.addEventListener(
         "change",
         renderExpenses
     );
-
 }
 
 
@@ -1005,12 +915,10 @@ const clearFilterButton =
     document.getElementById("clearFilterButton");
 
 if (clearFilterButton) {
-
     clearFilterButton.addEventListener(
         "click",
         clearFilters
     );
-
 }
 
 
@@ -1018,12 +926,10 @@ const clearFiltersButton =
     document.getElementById("clearFiltersButton");
 
 if (clearFiltersButton) {
-
     clearFiltersButton.addEventListener(
         "click",
         clearFilters
     );
-
 }
 
 
@@ -1042,61 +948,46 @@ function clearFilters() {
     }
 
     renderExpenses();
-
 }
 
 
-/* =====================================================
-   BUDGET
-===================================================== */
+/* ================= BUDGET ================= */
 
 const setBudgetButton =
     document.getElementById("setBudgetButton");
 
-
 if (setBudgetButton) {
 
-    setBudgetButton.addEventListener(
-        "click",
-        function () {
+    setBudgetButton.addEventListener("click", function () {
 
-            const budgetInput =
-                document.getElementById("budgetAmount");
+        const budgetInput =
+            document.getElementById("budgetAmount");
 
-            const value =
-                Number(
-                    budgetInput.value
-                );
+        const value =
+            Number(budgetInput.value);
 
 
-            if (!value || value <= 0) {
+        if (!value || value <= 0) {
 
-                alert("Please enter a valid budget.");
-
-                return;
-
-            }
-
-
-            budget = value;
-
-
-            saveData();
-
-            updateDashboard(true);
-
-
-            budgetInput.value = "";
-
+            alert("Please enter a valid budget.");
+            return;
         }
-    );
 
+
+        budget = value;
+
+        saveData();
+        updateDashboard();
+
+        budgetInput.value = "";
+
+        alert("Monthly budget set successfully.");
+
+    });
 }
 
 
-/* =====================================================
-   UPDATE BUDGET
-===================================================== */
+/* ================= UPDATE BUDGET ================= */
 
 function updateBudget(showAlert = false) {
 
@@ -1130,40 +1021,19 @@ function updateBudget(showAlert = false) {
     const used =
         getCurrentMonthExpenses();
 
-
     const remaining =
         budget - used;
 
 
-    /* =========================
-       BUDGET VALUE
-    ========================= */
-
     budgetTotal.textContent =
         money(budget);
-
-
-    /* =========================
-       USED VALUE
-    ========================= */
 
     budgetUsed.textContent =
         money(used);
 
-
-    /* =========================
-       REMAINING
-    ========================= */
-
     budgetRemaining.textContent =
-        money(
-            Math.max(remaining, 0)
-        );
+        money(Math.max(remaining, 0));
 
-
-    /* =========================
-       PERCENTAGE
-    ========================= */
 
     let rawPercentage = 0;
 
@@ -1176,17 +1046,6 @@ function updateBudget(showAlert = false) {
     }
 
 
-    /*
-       IMPORTANT:
-
-       rawPercentage can be 101, 200,
-       500 etc.
-
-       But progress bar and normal
-       percentage display MUST NEVER
-       go above 100%.
-    */
-
     const displayPercentage =
         Math.min(
             Math.max(rawPercentage, 0),
@@ -1194,34 +1053,21 @@ function updateBudget(showAlert = false) {
         );
 
 
-    /* =========================
-       PROGRESS BAR
-    ========================= */
-
     budgetProgress.style.width =
         displayPercentage + "%";
 
 
-    /* =========================
-       NORMAL STATUS
-    ========================= */
-
     if (budget <= 0) {
 
-        budgetPercentage.innerHTML =
+        budgetPercentage.textContent =
             "Set a monthly budget to start tracking.";
 
         budgetPercentage.className =
             "budget-status";
 
         return;
-
     }
 
-
-    /* =========================
-       OVER BUDGET
-    ========================= */
 
     if (rawPercentage > 100) {
 
@@ -1230,16 +1076,13 @@ function updateBudget(showAlert = false) {
 
 
         budgetPercentage.innerHTML = `
-            <strong>
-                ⚠️ 100% used
-            </strong>
+            <strong>⚠️ 100% used</strong>
             <br>
             <span>
                 You are ${money(overAmount)}
                 over your monthly budget.
             </span>
         `;
-
 
         budgetPercentage.className =
             "budget-status budget-over";
@@ -1253,17 +1096,11 @@ function updateBudget(showAlert = false) {
                 money(overAmount) +
                 "."
             );
-
         }
 
         return;
-
     }
 
-
-    /* =========================
-       80% OR MORE
-    ========================= */
 
     if (rawPercentage >= 80) {
 
@@ -1278,39 +1115,27 @@ function updateBudget(showAlert = false) {
             </span>
         `;
 
-
         budgetPercentage.className =
             "budget-status budget-warning";
 
-
         return;
-
     }
 
-
-    /* =========================
-       NORMAL
-    ========================= */
 
     budgetPercentage.innerHTML = `
         ${Math.round(displayPercentage)}% used
         • ${money(remaining)} remaining
     `;
 
-
     budgetPercentage.className =
         "budget-status";
-
 }
 
 
-/* =====================================================
-   CAN I AFFORD IT
-===================================================== */
+/* ================= AFFORDABILITY ================= */
 
 const checkAffordButton =
     document.getElementById("checkAffordButton");
-
 
 if (checkAffordButton) {
 
@@ -1318,25 +1143,21 @@ if (checkAffordButton) {
         "click",
         function () {
 
-            const item =
-                document
-                    .getElementById("affordItem")
-                    .value
-                    .trim();
+            const itemInput =
+                document.getElementById("affordItem");
 
-
-            const amount =
-                Number(
-                    document
-                        .getElementById("affordAmount")
-                        .value
-                );
-
+            const amountInput =
+                document.getElementById("affordAmount");
 
             const result =
-                document.getElementById(
-                    "affordResult"
-                );
+                document.getElementById("affordResult");
+
+
+            const item =
+                itemInput.value.trim();
+
+            const amount =
+                Number(amountInput.value);
 
 
             if (
@@ -1345,11 +1166,13 @@ if (checkAffordButton) {
                 amount <= 0
             ) {
 
+                result.className =
+                    "decision-result decision-warning";
+
                 result.textContent =
                     "Please enter the item and price.";
 
                 return;
-
             }
 
 
@@ -1363,49 +1186,35 @@ if (checkAffordButton) {
                     "decision-result decision-good";
 
                 result.innerHTML = `
-                    <strong>
-                        ✅ You can afford it.
-                    </strong>
-                    After buying
-                    ${escapeHTML(item)},
+                    <strong>✅ You can afford it.</strong>
+                    After buying ${escapeHTML(item)},
                     you would still have
                     ${money(savings - amount)}
                     available.
                 `;
 
-            }
-
-            else {
+            } else {
 
                 result.className =
                     "decision-result decision-danger";
 
                 result.innerHTML = `
-                    <strong>
-                        ⚠️ Better wait for now.
-                    </strong>
+                    <strong>⚠️ Better wait for now.</strong>
                     Your current available savings are
                     ${money(savings)}.
                 `;
-
             }
-
         }
     );
-
 }
 
 
-/* =====================================================
-   AUTOMATIC SMART FINANCIAL DECISION
-===================================================== */
+/* ================= SMART DECISION ================= */
 
 function updateSmartDecision() {
 
     const result =
-        document.getElementById(
-            "smartDecisionResult"
-        );
+        document.getElementById("smartDecisionResult");
 
     if (!result) return;
 
@@ -1413,10 +1222,8 @@ function updateSmartDecision() {
     const savings =
         getSavings();
 
-
     const monthlyExpenses =
         getCurrentMonthExpenses();
-
 
     const totalIncome =
         getTotalIncome();
@@ -1438,11 +1245,8 @@ function updateSmartDecision() {
         `;
 
         return;
-
     }
 
-
-    /* OVER BUDGET */
 
     if (budget > 0) {
 
@@ -1460,14 +1264,11 @@ function updateSmartDecision() {
                     ⚠️ You are over your monthly budget.
                 </strong>
                 <br>
-                You are
-                ${money(Math.abs(remaining))}
+                You are ${money(Math.abs(remaining))}
                 over your budget.
-                Consider reducing unnecessary expenses.
             `;
 
             return;
-
         }
 
 
@@ -1485,19 +1286,14 @@ function updateSmartDecision() {
                     ⚠️ Your budget is getting close to its limit.
                 </strong>
                 <br>
-                You have
-                ${money(remaining)}
+                You have ${money(remaining)}
                 remaining for this month.
             `;
 
             return;
-
         }
-
     }
 
-
-    /* POSITIVE SAVINGS */
 
     if (savings > 0) {
 
@@ -1509,15 +1305,11 @@ function updateSmartDecision() {
                 ✅ Your current financial position looks positive.
             </strong>
             <br>
-            You have saved
-            ${money(savings)}
-            so far.
+            You have saved ${money(savings)} so far.
             Keep monitoring your expenses and continue saving.
         `;
 
-    }
-
-    else {
+    } else {
 
         result.className =
             "decision-result decision-warning";
@@ -1527,24 +1319,19 @@ function updateSmartDecision() {
                 📌 Your expenses are currently higher than your income.
             </strong>
             <br>
-            Try to reduce unnecessary spending and review your expenses.
+            Try to reduce unnecessary spending
+            and review your expenses.
         `;
-
     }
-
 }
 
 
-/* =====================================================
-   MONTHLY FINANCIAL REPORT
-===================================================== */
+/* ================= MONTHLY REPORT ================= */
 
 function updateMonthlyReport() {
 
     const report =
-        document.getElementById(
-            "monthlyReport"
-        );
+        document.getElementById("monthlyReport");
 
     if (!report) return;
 
@@ -1555,28 +1342,32 @@ function updateMonthlyReport() {
 
     const monthlyIncome =
         incomeData
-            .filter(item =>
-                item.date &&
-                item.date.startsWith(currentMonth)
-            )
-            .reduce(
-                (sum, item) =>
-                    sum + Number(item.amount),
-                0
-            );
+            .filter(function (item) {
+
+                return item.date &&
+                    item.date.startsWith(currentMonth);
+
+            })
+            .reduce(function (sum, item) {
+
+                return sum + Number(item.amount || 0);
+
+            }, 0);
 
 
     const monthlyExpense =
         expenseData
-            .filter(item =>
-                item.date &&
-                item.date.startsWith(currentMonth)
-            )
-            .reduce(
-                (sum, item) =>
-                    sum + Number(item.amount),
-                0
-            );
+            .filter(function (item) {
+
+                return item.date &&
+                    item.date.startsWith(currentMonth);
+
+            })
+            .reduce(function (sum, item) {
+
+                return sum + Number(item.amount || 0);
+
+            }, 0);
 
 
     const monthlySavings =
@@ -1584,77 +1375,44 @@ function updateMonthlyReport() {
 
 
     const expenseCount =
-        expenseData.filter(item =>
-            item.date &&
-            item.date.startsWith(currentMonth)
-        ).length;
+        expenseData.filter(function (item) {
+
+            return item.date &&
+                item.date.startsWith(currentMonth);
+
+        }).length;
 
 
     report.innerHTML = `
 
         <div class="report-box">
-
-            <span>
-                Monthly Income
-            </span>
-
-            <strong>
-                ${money(monthlyIncome)}
-            </strong>
-
+            <span>Monthly Income</span>
+            <strong>${money(monthlyIncome)}</strong>
         </div>
 
-
         <div class="report-box">
-
-            <span>
-                Monthly Expenses
-            </span>
-
-            <strong>
-                ${money(monthlyExpense)}
-            </strong>
-
+            <span>Monthly Expenses</span>
+            <strong>${money(monthlyExpense)}</strong>
         </div>
 
-
         <div class="report-box">
-
-            <span>
-                Monthly Savings
-            </span>
-
-            <strong>
-                ${money(monthlySavings)}
-            </strong>
-
+            <span>Monthly Savings</span>
+            <strong>${money(monthlySavings)}</strong>
         </div>
 
-
         <div class="report-box">
-
-            <span>
-                Expense Records
-            </span>
-
-            <strong>
-                ${expenseCount}
-            </strong>
-
+            <span>Expense Records</span>
+            <strong>${expenseCount}</strong>
         </div>
 
     `;
-
 }
 
 
-/* =====================================================
-   SAVING GOALS
-===================================================== */
+/* ================= SAVING GOALS ================= */
 
 const addGoalButton =
     document.getElementById("addGoalButton");
-
 
 if (addGoalButton) {
 
@@ -1665,31 +1423,27 @@ if (addGoalButton) {
             const name =
                 goalName.value.trim();
 
-
             const target =
                 Number(goalTarget.value);
-
 
             const deadline =
                 goalDeadline.value;
 
 
             if (!name) {
-
                 alert("Please enter goal name.");
-
                 return;
-
             }
 
 
             if (!target || target <= 0) {
-
                 alert("Please enter target amount.");
-
                 return;
-
             }
+
+
+            const pakistanDateTime =
+                getPakistanDateTime();
 
 
             savingGoals.push({
@@ -1700,39 +1454,40 @@ if (addGoalButton) {
 
                 target: target,
 
-                deadline: deadline || ""
+                deadline: deadline || "",
+
+                createdDate:
+                    pakistanDateTime.date,
+
+                createdTime:
+                    pakistanDateTime.time,
+
+                createdAt:
+                    pakistanDateTime.timestamp
 
             });
 
 
             goalName.value = "";
-
             goalTarget.value = "";
-
             goalDeadline.value = "";
 
 
             updateDashboard();
 
-
             alert("Saving goal created successfully.");
 
         }
     );
-
 }
 
 
-/* =====================================================
-   RENDER SAVING GOALS
-===================================================== */
+/* ================= RENDER GOALS ================= */
 
 function renderSavingGoals() {
 
     const list =
-        document.getElementById(
-            "savingGoalsList"
-        );
+        document.getElementById("savingGoalsList");
 
     if (!list) return;
 
@@ -1749,32 +1504,28 @@ function renderSavingGoals() {
         `;
 
         return;
-
     }
 
 
     const currentSavings =
-        Math.max(
-            getSavings(),
-            0
-        );
+        Math.max(getSavings(), 0);
 
 
-    savingGoals.forEach(goal => {
+    savingGoals.forEach(function (goal) {
+
+        const target =
+            Number(goal.target) || 1;
+
 
         const percentage =
             Math.min(
-                (
-                    currentSavings /
-                    Number(goal.target)
-                ) * 100,
+                (currentSavings / target) * 100,
                 100
             );
 
 
         const card =
             document.createElement("div");
-
 
         card.className =
             "saving-goal";
@@ -1787,41 +1538,27 @@ function renderSavingGoals() {
                 <div>
 
                     <h3>
-                        🎯
-                        ${escapeHTML(goal.name)}
+                        🎯 ${escapeHTML(goal.name)}
                     </h3>
 
                     <span>
-                        Target:
-                        ${money(goal.target)}
+                        Target: ${money(goal.target)}
                     </span>
 
                 </div>
 
-
-                <div>
-
-                    <button
-                        type="button"
-                        class="secondary-button"
-                        onclick="deleteGoal(${goal.id})"
-                    >
-                        🗑️
-                    </button>
-
-                </div>
+                <button
+                    type="button"
+                    class="secondary-button"
+                    onclick="deleteGoal(${goal.id})">
+                    🗑️
+                </button>
 
             </div>
-
 
             <div class="goal-progress">
-
-                <div
-                    style="width:${percentage}%"
-                ></div>
-
+                <div style="width:${percentage}%"></div>
             </div>
-
 
             <div class="goal-details">
 
@@ -1835,17 +1572,10 @@ function renderSavingGoals() {
 
             </div>
 
-
             ${
                 goal.deadline
                     ? `
-                        <small
-                            style="
-                                display:block;
-                                margin-top:8px;
-                                color:#777;
-                            "
-                        >
+                        <small>
                             Target Date:
                             ${formatDate(goal.deadline)}
                         </small>
@@ -1859,45 +1589,34 @@ function renderSavingGoals() {
         list.appendChild(card);
 
     });
-
 }
 
 
-/* =====================================================
-   DELETE GOAL
-===================================================== */
+/* ================= DELETE GOAL ================= */
 
 function deleteGoal(id) {
 
-    if (
-        !confirm(
-            "Delete this saving goal?"
-        )
-    ) {
+    if (!confirm("Delete this saving goal?")) {
         return;
     }
 
 
     savingGoals =
-        savingGoals.filter(
-            goal => goal.id !== id
-        );
+        savingGoals.filter(function (goal) {
+
+            return goal.id !== id;
+
+        });
 
 
     updateDashboard();
-
 }
 
 
-/* =====================================================
-   FINANCIAL CHAT
-===================================================== */
+/* ================= FINANCIAL CHAT ================= */
 
 const financialChatButton =
-    document.getElementById(
-        "financialChatButton"
-    );
-
+    document.getElementById("financialChatButton");
 
 if (financialChatButton) {
 
@@ -1905,15 +1624,11 @@ if (financialChatButton) {
         "click",
         sendFinancialMessage
     );
-
 }
 
 
 const financialChatInput =
-    document.getElementById(
-        "financialChatInput"
-    );
-
+    document.getElementById("financialChatInput");
 
 if (financialChatInput) {
 
@@ -1931,21 +1646,15 @@ if (financialChatInput) {
 
         }
     );
-
 }
 
 
-/* =====================================================
-   SEND FINANCIAL MESSAGE
-===================================================== */
+/* ================= SEND CHAT ================= */
 
 function sendFinancialMessage() {
 
     const input =
-        document.getElementById(
-            "financialChatInput"
-        );
-
+        document.getElementById("financialChatInput");
 
     if (!input) return;
 
@@ -1954,55 +1663,31 @@ function sendFinancialMessage() {
         input.value.trim();
 
 
-    if (!message) {
-
-        return;
-
-    }
+    if (!message) return;
 
 
-    addChatMessage(
-        message,
-        "user"
-    );
-
+    addChatMessage(message, "user");
 
     input.value = "";
 
 
-    setTimeout(
-        function () {
+    setTimeout(function () {
 
-            const reply =
-                getFinancialReply(message);
+        const reply =
+            getFinancialReply(message);
 
+        addChatMessage(reply, "bot");
 
-            addChatMessage(
-                reply,
-                "bot"
-            );
-
-        },
-        300
-    );
-
+    }, 300);
 }
 
 
-/* =====================================================
-   ADD CHAT MESSAGE
-===================================================== */
+/* ================= ADD CHAT ================= */
 
-function addChatMessage(
-    message,
-    type
-) {
+function addChatMessage(message, type) {
 
     const messages =
-        document.getElementById(
-            "chatMessages"
-        );
-
+        document.getElementById("chatMessages");
 
     if (!messages) return;
 
@@ -2025,24 +1710,16 @@ function addChatMessage(
         wrapper.innerHTML = `
 
             <div class="chat-bubble">
-
-                <p>
-                    ${escapeHTML(message)}
-                </p>
-
+                <p>${escapeHTML(message)}</p>
             </div>
 
         `;
 
-    }
-
-    else {
+    } else {
 
         wrapper.innerHTML = `
 
-            <div class="chat-avatar">
-                🤖
-            </div>
+            <div class="chat-avatar">🤖</div>
 
             <div class="chat-bubble">
 
@@ -2057,22 +1734,17 @@ function addChatMessage(
             </div>
 
         `;
-
     }
 
 
     messages.appendChild(wrapper);
 
-
     messages.scrollTop =
         messages.scrollHeight;
-
 }
 
 
-/* =====================================================
-   FINANCIAL CHAT REPLY
-===================================================== */
+/* ================= CHAT REPLY ================= */
 
 function getFinancialReply(message) {
 
@@ -2083,20 +1755,15 @@ function getFinancialReply(message) {
     const income =
         getTotalIncome();
 
-
     const expenses =
         getTotalExpenses();
-
 
     const savings =
         getSavings();
 
-
     const monthlyExpenses =
         getCurrentMonthExpenses();
 
-
-    /* BALANCE */
 
     if (
         text.includes("balance") ||
@@ -2104,14 +1771,10 @@ function getFinancialReply(message) {
     ) {
 
         return `
-            Your current balance is
-            ${money(savings)}.
+Your current balance is ${money(savings)}.
         `;
-
     }
 
-
-    /* INCOME */
 
     if (
         text.includes("income") ||
@@ -2120,14 +1783,10 @@ function getFinancialReply(message) {
     ) {
 
         return `
-            Your total income is
-            ${money(income)}.
+Your total income is ${money(income)}.
         `;
-
     }
 
-
-    /* EXPENSE */
 
     if (
         text.includes("expense") ||
@@ -2136,17 +1795,11 @@ function getFinancialReply(message) {
     ) {
 
         return `
-            Your total expenses are
-            ${money(expenses)}.
-
-            This month's expenses are
-            ${money(monthlyExpenses)}.
+Your total expenses are ${money(expenses)}.
+This month's expenses are ${money(monthlyExpenses)}.
         `;
-
     }
 
-
-    /* SAVING */
 
     if (
         text.includes("saving") ||
@@ -2154,25 +1807,18 @@ function getFinancialReply(message) {
     ) {
 
         return `
-            Your current savings are
-            ${money(savings)}.
+Your current savings are ${money(savings)}.
         `;
-
     }
 
 
-    /* BUDGET */
-
-    if (
-        text.includes("budget")
-    ) {
+    if (text.includes("budget")) {
 
         if (budget <= 0) {
 
             return `
-                You have not set a monthly budget yet.
+You have not set a monthly budget yet.
             `;
-
         }
 
 
@@ -2183,53 +1829,35 @@ function getFinancialReply(message) {
         if (remaining < 0) {
 
             return `
-                ⚠️ You are over your monthly budget by
-                ${money(Math.abs(remaining))}.
+⚠️ You are over your monthly budget by
+${money(Math.abs(remaining))}.
             `;
-
         }
 
 
         return `
-            Your monthly budget is
-            ${money(budget)}.
-
-            You have
-            ${money(remaining)}
-            remaining.
+Your monthly budget is ${money(budget)}.
+You have ${money(remaining)} remaining.
         `;
-
     }
 
 
-    /* GOAL */
-
-    if (
-        text.includes("goal")
-    ) {
+    if (text.includes("goal")) {
 
         if (savingGoals.length === 0) {
 
             return `
-                You have not created a saving goal yet.
+You have not created a saving goal yet.
             `;
-
         }
 
 
         return `
-            You currently have
-            ${savingGoals.length}
-            saving goal(s).
-
-            Their progress is automatically based
-            on your current savings.
+You currently have ${savingGoals.length}
+saving goal(s).
         `;
-
     }
 
-
-    /* HELLO */
 
     if (
         text.includes("hello") ||
@@ -2238,42 +1866,34 @@ function getFinancialReply(message) {
     ) {
 
         return `
-            Hello! 👋
-
-            I can tell you about your balance,
-            income, expenses, savings,
-            budget and saving goals.
+Hello! 👋
+I can tell you about your balance,
+income, expenses, savings, budget
+and saving goals.
         `;
-
     }
 
 
     return `
-        I can help with:
+I can help with:
 
-        • Balance
-        • Income
-        • Expenses
-        • Savings
-        • Budget
-        • Saving Goals
+• Balance
+• Income
+• Expenses
+• Savings
+• Budget
+• Saving Goals
 
-        Try asking:
-        "What is my balance?"
+Try asking:
+"What is my balance?"
     `;
-
 }
 
 
-/* =====================================================
-   EXPORT CSV
-===================================================== */
+/* ================= EXPORT CSV ================= */
 
 const exportCSVButton =
-    document.getElementById(
-        "exportCSVButton"
-    );
-
+    document.getElementById("exportCSVButton");
 
 if (exportCSVButton) {
 
@@ -2281,7 +1901,6 @@ if (exportCSVButton) {
         "click",
         exportCSV
     );
-
 }
 
 
@@ -2291,7 +1910,7 @@ function exportCSV() {
         "Type,Name,Category,Amount,Date,Time,Note\n";
 
 
-    incomeData.forEach(item => {
+    incomeData.forEach(function (item) {
 
         csv +=
             `"Income","${csvSafe(item.source)}","","${item.amount}","${item.date}","${csvSafe(item.time)}","${csvSafe(item.note)}"\n`;
@@ -2299,7 +1918,7 @@ function exportCSV() {
     });
 
 
-    expenseData.forEach(item => {
+    expenseData.forEach(function (item) {
 
         csv +=
             `"Expense","${csvSafe(item.name)}","${csvSafe(item.category)}","${item.amount}","${item.date}","${csvSafe(item.time)}","${csvSafe(item.note)}"\n`;
@@ -2326,7 +1945,6 @@ function exportCSV() {
 
     link.href = url;
 
-
     link.download =
         "PocketPilot-Financial-Data.csv";
 
@@ -2337,9 +1955,7 @@ function exportCSV() {
 
     link.remove();
 
-
     URL.revokeObjectURL(url);
-
 }
 
 
@@ -2347,19 +1963,13 @@ function csvSafe(value) {
 
     return String(value ?? "")
         .replace(/"/g, '""');
-
 }
 
 
-/* =====================================================
-   RESET ALL
-===================================================== */
+/* ================= RESET ALL ================= */
 
 const resetAllButton =
-    document.getElementById(
-        "resetAllButton"
-    );
-
+    document.getElementById("resetAllButton");
 
 if (resetAllButton) {
 
@@ -2377,11 +1987,8 @@ if (resetAllButton) {
 
 
             incomeData = [];
-
             expenseData = [];
-
             savingGoals = [];
-
             budget = 0;
 
 
@@ -2391,9 +1998,7 @@ if (resetAllButton) {
 
 
             const chatMessages =
-                document.getElementById(
-                    "chatMessages"
-                );
+                document.getElementById("chatMessages");
 
 
             if (chatMessages) {
@@ -2422,23 +2027,17 @@ if (resetAllButton) {
                     </div>
 
                 `;
-
             }
 
         }
     );
-
 }
 
 
-/* =====================================================
-   DARK MODE
-===================================================== */
+/* ================= DARK MODE ================= */
 
 const darkModeButton =
-    document.getElementById(
-        "darkModeButton"
-    );
+    document.getElementById("darkModeButton");
 
 
 if (darkModeButton) {
@@ -2447,15 +2046,11 @@ if (darkModeButton) {
         "click",
         function () {
 
-            document.body.classList.toggle(
-                "dark"
-            );
+            document.body.classList.toggle("dark");
 
 
             const dark =
-                document.body.classList.contains(
-                    "dark"
-                );
+                document.body.classList.contains("dark");
 
 
             localStorage.setItem(
@@ -2471,14 +2066,11 @@ if (darkModeButton) {
 
         }
     );
-
 }
 
 
 if (
-    localStorage.getItem(
-        "pocketpilot_dark"
-    ) === "true"
+    localStorage.getItem("pocketpilot_dark") === "true"
 ) {
 
     document.body.classList.add("dark");
@@ -2490,44 +2082,45 @@ if (
             "☀️ Light Mode";
 
     }
-
 }
 
 
+/* ================= LIVE PAKISTAN CLOCK ================= */
+
 /* =====================================================
-   CLOCK
-===================================================== */
+   LIVE PAKISTAN CLOCK
+   ===================================================== */
 
 function updateClock() {
 
-    const currentTime =
-        document.getElementById(
-            "currentTime"
-        );
+    const currentTime = document.getElementById("currentTime");
 
-
-    if (currentTime) {
-
-        currentTime.textContent =
-            new Date().toLocaleTimeString();
-
+    if (!currentTime) {
+        return;
     }
 
+    const now = new Date();
+
+    const pakistanTime = now.toLocaleTimeString("en-US", {
+        timeZone: "Asia/Karachi",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: true
+    });
+
+    currentTime.textContent = pakistanTime;
 }
 
 
+/* Start clock immediately */
 updateClock();
 
-
-setInterval(
-    updateClock,
-    1000
-);
+/* Update every second */
+setInterval(updateClock, 1000);
 
 
-/* =====================================================
-   DATE FORMAT
-===================================================== */
+/* ================= DATE FORMAT ================= */
 
 function formatDate(dateString) {
 
@@ -2539,22 +2132,15 @@ function formatDate(dateString) {
 
 
     if (parts.length !== 3) {
-
         return dateString;
-
     }
 
 
-    return `
-        ${parts[2]}/${parts[1]}/${parts[0]}
-    `;
-
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
 
-/* =====================================================
-   BASIC HTML SAFETY
-===================================================== */
+/* ================= HTML SAFETY ================= */
 
 function escapeHTML(value) {
 
@@ -2564,12 +2150,9 @@ function escapeHTML(value) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
-
 }
 
 
-/* =====================================================
-   INITIAL LOAD
-===================================================== */
+/* ================= INITIAL LOAD ================= */
 
 updateDashboard();
